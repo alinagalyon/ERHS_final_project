@@ -1,0 +1,28 @@
+---
+title: "251117_Galyon_data"
+author: "Alina"
+date: "2025-11-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+cheeses <- read_csv("cheeses.csv")
+head(cheeses)
+class(cheeses)
+
+cheeses <- cheeses %>%
+  select(-c(url))
+
+head(cheeses)
+```
+
+# Thoughts
+
+We could make a phylogeny of cheeses
+Map-based plots (Chris)- interactive maps
+Nutrition content-based stuff: animal vs. fat content
+Something with aroma and flavor- corresponding flavor with animal or region or fat-content
+
+
