@@ -1,0 +1,64 @@
+
+Home
+====================================
+
+
+---
+title: "Big Cheeses (ERHS535 F25)"
+output: 
+  flexdashboard::flex_dashboard:
+    navbar:
+      - { title: "Test", href: "https://example.com/about", align: left }
+---
+
+Column
+-------------------------------------
+
+### Big Title Right Here
+
+Wow, do you love cheese? Yes? That means you're in the right place. Don't forget the crackers!
+
+<img src="https://c.tenor.com/hN89U2X0PC4AAAAC/tenor.gif" width="400" height="300" />
+
+
+
+Cheese Stats
+===================================
+
+Column
+-------------------------------------
+    
+Here are some charts about cheese. It's important to study cheese becasue it is interesting. It is interesting because we love cheese.    
+
+
+
+### Chart 1
+```{r, fig.width = 14, fig.height = 10}
+cheeses <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
+
+library(ggplot2)
+ggplot(data = cheeses) +
+  geom_bar(aes(x = milk)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text = element_text(size = 14)) +
+  labs(x = "Milk", y = "Number of Cheeses")
+```
+Some information about the chart
+   
+### Chart 2
+
+```{r}
+```   
+ 
+### Chart 3
+    
+```{r}
+```
+
+
+
+Cheese Finder
+===================================
+
+## Find your dream cheese (other than wensleydale, duh...)
+
