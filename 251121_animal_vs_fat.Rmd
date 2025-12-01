@@ -1,0 +1,184 @@
+---
+title: "Animal_vs_fatcontent"
+author: "Alina"
+date: "2025-11-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r data}
+library(tidyverse)
+
+cheeses <- read_csv("cheeses.csv")
+head(cheeses)
+class(cheeses)
+
+cheeses <- cheeses %>%
+  select(-c(url))
+
+head(cheeses)
+```
+```{r filter to fat}
+#filter such that there is no na for fat content and animal
+cheeses_clean <- cheeses %>%
+  filter(!is.na(fat_content)) %>%
+  filter(!is.na(milk))
+
+unique(cheeses_clean$fat_content)
+
+nrow(cheeses_clean) #n = 242
+
+```
+
+## Working on making the fat content column more usable by taking the average if there is a range of fat percentage given, and converting "8g/ 100g" into a percentage.
+
+```{r fat}
+cheeses_clean <- cheeses_clean %>%
+   mutate(
+    # 1. Standardize the text and units
+    fat_str = fat_content %>%
+      str_to_lower() %>%
+      # turn "8g/100g" or variants into "8%"
+      str_replace_all("g\\s*/\\s*100g", "%") %>%
+      str_replace_all("%", "") %>%   # drop percent sign
+      str_trim()) %>%
+  # 2. Split ranges into min and max
+  separate(fat_str,
+           into = c("fat_min", "fat_max"),
+           sep = "-",
+           fill = "right",
+           remove = FALSE) %>%
+  mutate(
+    fat_min = as.numeric(fat_min),
+    fat_max = as.numeric(fat_max),
+    # 3. Use the single value, or the *median* of the range
+    #making column fat_pct to be standardized fat content (numerical)
+    fat_pct = if_else(
+      is.na(fat_max),
+      fat_min,                      # just one value, e.g. 8, 45
+      (fat_min + fat_max) / 2))       # median of endpoints for a range
+ 
+unique(cheeses_clean$fat_pct) #all the same
+class(cheeses_clean$fat_pct) #numeric
+cheeses_clean
+
+
+```
+
+## Mutating cheeses_clean dataset to make column for "primary animal," i.e., if there are 2 animals listed for the milk source, I will use the first one listed for this dataset
+```{r animal}
+cheeses_clean <- cheeses_clean %>%
+  mutate(primarymilk = (str_split_fixed(milk, ",", 2)[, 1])) %>%
+  filter(!is.na(primarymilk))
+head(cheeses_clean)
+
+```
+  
+## Plot
+
+```{r plot}
+library(ggplot2)
+
+fat_animal_plot <- ggplot(cheeses_clean, aes(x = primarymilk, y = fat_pct, fill = primarymilk)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.2, alpha = 0.4) +
+    labs(
+    x = "Animal source of milk",
+    y = "Fat content (%)",
+    title = "Cheese fat content by animal source"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "YlOrRd")
+
+fat_animal_plot
+
+```
+  
+## Does phylogeny explain fat content differences?
+
+```{r tree}
+install.packages("rotl")
+library(rotl)
+
+animals <- unique(cheeses_clean$primarymilk)
+
+
+
+name_map <- c(
+  "cow"           = "Bos taurus",
+  "sheep"         = "Ovis aries",
+  "goat"          = "Capra hircus ",
+  "camel"         = "Camelus dromedarius",  # dromedary camel
+  "moose"         = "Alces alces",
+  "water buffalo" = "Bubalus bubalis",
+  "buffalo"       = "Bubalus bubalis"      # treat as water buffalo for cheeses
+)
+
+
+
+animals_fixed <- ifelse(
+  animals %in% names(name_map),
+  name_map[animals],
+  animals
+)
+
+animals_fixed #sanity check
+
+# Create the lookup: scientific -> common
+lookup <- animals            # values = common names
+names(lookup) <- animals_fixed 
+
+
+
+# 4. Ask OpenTree for matches and build the tree
+matches_fixed <- tnrs_match_names(animals_fixed, context_name = "Animals")
+ott_ids <- matches_fixed$ott_id
+tree <- tol_induced_subtree(ott_ids)
+
+# 5. Clean tree tip labels (often have underscores / OTT IDs)
+clean_tips <- tree$tip.label
+clean_tips <- sub("_ott.*$", "", clean_tips)   # drop _ott12345 suffix if present
+clean_tips <- gsub("_", " ", clean_tips)       # turn "Bos_taurus" -> "Bos taurus"
+clean_tips <- sub("\\s*\\(.*\\)$", "", clean_tips)
+
+# 6. Relabel tips back to your cheese names using 'lookup'
+tree$tip.label <- lookup[clean_tips]
+
+# 7. Plot
+plot(tree, cex = 1)
+
+```
+ 
+  ## Plot median cheese fat content on tree:
+  
+
+```{r plot_tree_with_medians, fig.width=6, fig.height=6}
+plot(tree, cex = 1)
+
+library(ape)
+
+# 1. Build a named vector of medians
+trait <- median_fat_by_animal$median_fat
+names(trait) <- median_fat_by_animal$primarymilk
+
+# 2. Reorder trait vector to match the tree tip order
+trait <- trait[tree$tip.label]
+
+trait
+
+plot(tree, cex = 1)
+
+# 4. Create new labels: "animal — median fat content"
+new_labels <- paste0(tree$tip.label, " — ", round(trait, 1), "%")
+
+new_labels
+
+# 5. Replace tree tip labels with these combined labels
+tree$tip.label <- new_labels
+
+plot(tree, cex = 1)
+
+```
