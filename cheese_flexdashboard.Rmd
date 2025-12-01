@@ -2,16 +2,19 @@
 output:
   flexdashboard::flex_dashboard: default
   html_document: default
+  theme: 
+      version: 4
+      bootswatch: minty
 ---
+
 # Home
 
---- 
+---
 title: "Big Cheeses (ERHS535 F25)"
 output: 
   flexdashboard::flex_dashboard:
     navbar:
       - { title: "Test", href: "https://example.com/about", align: left }
-      
 ---
 
 ```{r}
@@ -28,11 +31,11 @@ Wow, do you love cheese? Yes? That means you're in the right place. Don't forget
 
 # Cheese Stats
 
-## Column
-
 Here are some charts about cheese. It's important to study cheese becasue it is interesting. It is interesting because we love cheese.
 
-### Chart 1
+## Column 1 {data-height="800"}
+
+### Chart 1 {data-height="800"}
 
 ```{r, fig.width = 14, fig.height = 10}
 cheeses <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
@@ -45,18 +48,75 @@ ggplot(data = cheeses) +
   labs(x = "Milk", y = "Number of Cheeses")
 ```
 
+### Chart 2 {data-height="800"}
+
+```{r}
+```
+
+### Chart 3 {data-height="800"}
+
+```{r}
+```
+
+## Column 2 {data-height="800"}
+
+### Chart 1 Description {data-height="800"}
+
 Some information about the chart
 
-### Chart 2
+### Chart 2 Description {data-height="800"}
 
-```{r}
-```
+Information about this chart
 
-### Chart 3
+### Chart 3 Desc {data-height="800"}
 
-```{r}
-```
+Information about this chart
 
 # Cheese Finder
 
-## Find your dream cheese (other than wensleydale, duh...)
+<!-- ## Find your dream cheese (other than wensleydale, duh...) -->
+
+
+## Inputs {.sidebar data-width=250}
+
+```{r}
+seasonUiInput <- function(id) {
+  ns <- NS(id)
+  fillCol(
+    inputPanel(
+      selectInput(ns("season"), "Season ", choices = data$Season),
+    )
+  )
+}
+
+seasonUiOutput <- function(id) {
+  ns <- NS(id)
+  fillCol(
+    tableOutput(ns("seasonPlot"))
+  )
+}
+
+seasonServer <- function(id) {
+  moduleServer(
+    id,
+    function(input, output, session, ...) {
+      output$seasonPlot <- renderTable({
+        data[data$Season %in% input$season, ]
+      })
+    }
+  )
+}
+```
+
+```{r}
+seasonUiInput("seasons")
+seasonServer("seasons")
+```
+
+## Seasons
+
+### Seasons
+
+```{r}
+seasonUiOutput("seasons")
+```
