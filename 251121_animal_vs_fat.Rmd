@@ -141,8 +141,9 @@ tree <- tol_induced_subtree(ott_ids)
 # 5. Clean tree tip labels (often have underscores / OTT IDs)
 clean_tips <- tree$tip.label
 clean_tips <- sub("_ott.*$", "", clean_tips)   # drop _ott12345 suffix if present
-clean_tips <- gsub("_", " ", clean_tips)       # turn "Bos_taurus" -> "Bos taurus"
 clean_tips <- sub("\\s*\\(.*\\)$", "", clean_tips)
+clean_tips <- gsub("_", " ", clean_tips)       # turn "Bos_taurus" -> "Bos taurus"
+
 
 # 6. Relabel tips back to your cheese names using 'lookup'
 tree$tip.label <- lookup[clean_tips]
@@ -179,6 +180,88 @@ new_labels
 # 5. Replace tree tip labels with these combined labels
 tree$tip.label <- new_labels
 
-plot(tree, cex = 1)
+plot(tree, cex = 1.2)
 
 ```
+
+```{r colored_tips, message=FALSE, warning=FALSE}
+library(scales)   # for col_numeric
+library(phytools)
+
+# 1. Create a color palette
+colors <- colorRampPalette(c("lightyellow", "orange", "red"))(100)
+
+# 2. Scale trait values into 1–100
+scaled_trait <- as.numeric(
+  cut(trait,
+      breaks = 100,
+      labels = FALSE,
+      include.lowest = TRUE)
+)
+
+# 3. Assign colors
+tip_colors <- colors[scaled_trait]
+
+# 4. Plot the tree
+plot(tree, cex=1)
+
+# 5. Add tip labels colored by median fat content
+plot(tree, cex=1) %>%
+  tiplabels(
+  labels = paste0(tree$tip.label, " — ", round(trait, 1), "%"),
+  tip = 1:Ntip(tree),
+  col = tip_colors,
+  frame = "none",
+  adj = -0.1,
+  cex = 0.8
+)
+
+
+```
+
+```{r median_fat_by_animal}
+library(dplyr)
+
+median_fat_by_animal <- cheeses_clean %>%
+  group_by(primarymilk) %>%
+  summarize(median_fat = median(fat_pct, na.rm = TRUE))
+
+median_fat_by_animal
+```
+
+```{r ggtree_plot, message=FALSE, warning=FALSE}
+# If you don't have ggtree yet:
+# if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+# BiocManager::install("ggtree")
+
+library(ggtree)
+library(dplyr)
+library(tibble)
+
+new_labels <- paste0(tree$tip.label, " — ", round(trait, 1), "%")
+
+new_labels
+
+# check: label column should be cow/goat/sheep/...; median_fat is the median % for each
+
+# 2. Add color gradient
+pal <- colorRampPalette(c("gold", "orange", "red"))
+
+# 3. Plot with ggtree
+plot_fat <- ggtree(tree) %>% tree +
+  geom_tippoint(aes(color = median_fat), size = 3) +
+  geom_tiplab(offset = 0.05, size = 3) +
+  scale_color_gradientn(
+    colours = pal(100),
+    name = "Median fat (%)"
+  ) +
+  theme_tree2()
+
+plot_fat
+
+
+
+```
+
+
+#### Plot heat map with animals and cheese family, and flavor
