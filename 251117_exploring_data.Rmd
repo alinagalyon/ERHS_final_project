@@ -24,5 +24,13 @@ We could make a phylogeny of cheeses
 Map-based plots (Chris)- interactive maps
 Nutrition content-based stuff: animal vs. fat content
 Something with aroma and flavor- corresponding flavor with animal or region or fat-content
+Histogram of milk sources and country of origin
+More families of cheeses that come from different regions
 
+fat content vs animal: could also break down fat content and cheese type
+clear out N/A
+pull unique
+average the ranges
+convert the g/100g to %
 
+can make another graph of animals vs n/a data to look for trends
