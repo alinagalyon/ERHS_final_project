@@ -5,6 +5,7 @@ output:
   theme: 
       version: 4
       bootswatch: minty
+runtime: shiny
 ---
 
 # Home
@@ -41,6 +42,8 @@ Here are some charts about cheese. It's important to study cheese becasue it is 
 
 ```{r, fig.width = 14, fig.height = 10}
 cheeses <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
+
+# cheeses <- read.csv('data/cheeses.csv')
 
 library(ggplot2)
 ggplot(data = cheeses) +
@@ -83,50 +86,100 @@ Information about this chart
 
 ## Inputs {.sidebar data-width=250}
 
+```{r}
+# Drop down menus
 
-```{r setup, include=FALSE}
-library(shiny)
-library(dplyr)
-library(DT)
+selectInput('selected_country', 'Country', unique(cheeses$country))
 
-# Load or define your cheeses dataset here
-# Example: cheeses <- read.csv("cheeses.csv")
+selectInput('selected_milk', 'Milk', unique(cheeses$milk))
 
-# Clean up blank values
-cheeses <- cheeses %>%
-  mutate(across(everything(), ~ifelse(. %in% c("", " ", NA), NA, .)))
+selectInput('selected_rind', 'Rind', unique(cheeses$rind))
+
+# selectInput('selected_vegetarian', 'Vegetarian', unique(cheeses$vegetarian))
+```
+
+Column
+-----------------------------------------------------------------------
+
+### Cheeses to try
 
 
-renderDataTable({
+```{r}
 
-  df <- cheeses
+output$cheese_table <- DT::renderDT({
 
-  # Apply filter only if not All
-  if (input$country != "All") {
-    df <- df %>% filter(country == input$country)
-  }
+df <- cheeses |>
+filter(
+country == input$selected_country,
+milk == input$selected_milk,
+rind == input$selected_rind
+) |>
+select(cheese)
 
-  datatable(
-    df,
-    options = list(pageLength = 10, scrollX = TRUE),
-    rownames = FALSE
+DT::datatable(
+df,
+selection = "single",
+rownames = FALSE,
+options = list(dom = 't')
+)
+})
+DT::DTOutput("cheese_table")
+
+# library(dplyr)
+# 
+# renderTable({
+#   df <- cheeses |>
+#     dplyr::filter(country == input$selected_country,
+#                   milk == input$selected_milk,
+#                   rind == input$selected_rind)
+#   
+#   df |> select(cheese)
+# 
+# })
+```
+
+
+Column
+-----------------------------------------------------------------------
+
+```{r}
+
+output$cheese_details <- renderTable({
+  req(input$cheese_table_rows_selected)
+  
+  filtered <- cheeses |>
+    filter(
+      country == input$selected_country,
+      milk == input$selected_milk,
+      rind == input$selected_rind
+    )
+  
+  row <- filtered[input$cheese_table_rows_selected, ]
+
+  # Convert to vertical key-value table
+  data.frame(
+    Field = names(row),
+    Value = as.character(t(row)),
+    stringsAsFactors = FALSE
   )
 })
-```
 
-```{r}
-selectInput('country', 'Country', names(cheeses))
-```
+tableOutput("cheese_details")
 
-```{r}
-countryUiInput <- function(id) {
-  ns <- shiny::NS(id)
-  fillCol(
-    inputPanel(
-      selectInput(ns("country"), "Country ", choices = data$Season),
-    )
-  )
-}
+# output$cheese_details <- renderTable({
+# req(input$cheese_table_rows_selected)
+# 
+# filtered <- cheeses |>
+# filter(
+# country == input$selected_country,
+# milk == input$selected_milk,
+# rind == input$selected_rind
+# )
+# 
+# filtered[input$cheese_table_rows_selected, ]
+# })
+# 
+# tableOutput("cheese_details")
 ```
 
 
