@@ -19,6 +19,7 @@ output:
 
 ```{r}
 library(flexdashboard)
+library(shiny)
 ```
 
 ## Column
@@ -30,6 +31,7 @@ Wow, do you love cheese? Yes? That means you're in the right place. Don't forget
 <!-- <img src="https://c.tenor.com/hN89U2X0PC4AAAAC/tenor.gif" width="400" height="300"/> -->
 
 # Cheese Stats
+<!------------------------------->
 
 Here are some charts about cheese. It's important to study cheese becasue it is interesting. It is interesting because we love cheese.
 
@@ -38,7 +40,7 @@ Here are some charts about cheese. It's important to study cheese becasue it is 
 ### Chart 1 {data-height="800"}
 
 ```{r, fig.width = 14, fig.height = 10}
-cheeses <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
+cheeses <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
 
 library(ggplot2)
 ggplot(data = cheeses) +
@@ -74,49 +76,58 @@ Information about this chart
 
 # Cheese Finder
 
+<!------------------------------->
+
 <!-- ## Find your dream cheese (other than wensleydale, duh...) -->
 
 
 ## Inputs {.sidebar data-width=250}
 
+
+```{r setup, include=FALSE}
+library(shiny)
+library(dplyr)
+library(DT)
+
+# Load or define your cheeses dataset here
+# Example: cheeses <- read.csv("cheeses.csv")
+
+# Clean up blank values
+cheeses <- cheeses %>%
+  mutate(across(everything(), ~ifelse(. %in% c("", " ", NA), NA, .)))
+
+
+renderDataTable({
+
+  df <- cheeses
+
+  # Apply filter only if not All
+  if (input$country != "All") {
+    df <- df %>% filter(country == input$country)
+  }
+
+  datatable(
+    df,
+    options = list(pageLength = 10, scrollX = TRUE),
+    rownames = FALSE
+  )
+})
+```
+
 ```{r}
-seasonUiInput <- function(id) {
-  ns <- NS(id)
+selectInput('country', 'Country', names(cheeses))
+```
+
+```{r}
+countryUiInput <- function(id) {
+  ns <- shiny::NS(id)
   fillCol(
     inputPanel(
-      selectInput(ns("season"), "Season ", choices = data$Season),
+      selectInput(ns("country"), "Country ", choices = data$Season),
     )
   )
 }
-
-seasonUiOutput <- function(id) {
-  ns <- NS(id)
-  fillCol(
-    tableOutput(ns("seasonPlot"))
-  )
-}
-
-seasonServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session, ...) {
-      output$seasonPlot <- renderTable({
-        data[data$Season %in% input$season, ]
-      })
-    }
-  )
-}
 ```
 
-```{r}
-seasonUiInput("seasons")
-seasonServer("seasons")
-```
 
-## Seasons
 
-### Seasons
-
-```{r}
-seasonUiOutput("seasons")
-```
