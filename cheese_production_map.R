@@ -133,3 +133,11 @@ cheese_map <- leaflet(data = combine) %>%
   )
 # Print the map
 cheese_map
+
+
+
+#check the CRS for the weird borders
+#fix the legend overlap
+#can try continuous instead of binning for color gradient 
+
+
