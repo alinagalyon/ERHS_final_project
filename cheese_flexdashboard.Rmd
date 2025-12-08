@@ -1,0 +1,186 @@
+---
+output:
+  flexdashboard::flex_dashboard: default
+  html_document: default
+  theme: 
+      version: 4
+      bootswatch: minty
+runtime: shiny
+---
+
+# Home
+
+---
+title: "Big Cheeses (ERHS535 F25)"
+output: 
+  flexdashboard::flex_dashboard:
+    navbar:
+      - { title: "Test", href: "https://example.com/about", align: left }
+---
+
+```{r}
+library(flexdashboard)
+library(shiny)
+```
+
+## Column
+
+### Big Title Right Here
+
+Wow, do you love cheese? Yes? That means you're in the right place. Don't forget the crackers!
+
+<!-- <img src="https://c.tenor.com/hN89U2X0PC4AAAAC/tenor.gif" width="400" height="300"/> -->
+
+# Cheese Stats
+<!------------------------------->
+
+Here are some charts about cheese. It's important to study cheese becasue it is interesting. It is interesting because we love cheese.
+
+## Column 1 {data-height="800"}
+
+### Chart 1 {data-height="800"}
+
+```{r, fig.width = 14, fig.height = 10}
+cheeses <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
+
+# cheeses <- read.csv('data/cheeses.csv')
+
+library(ggplot2)
+ggplot(data = cheeses) +
+  geom_bar(aes(x = milk)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text = element_text(size = 14)) +
+  labs(x = "Milk", y = "Number of Cheeses")
+```
+
+### Chart 2 {data-height="800"}
+
+```{r}
+```
+
+### Chart 3 {data-height="800"}
+
+```{r}
+```
+
+## Column 2 {data-height="800"}
+
+### Chart 1 Description {data-height="800"}
+
+Some information about the chart
+
+### Chart 2 Description {data-height="800"}
+
+Information about this chart
+
+### Chart 3 Desc {data-height="800"}
+
+Information about this chart
+
+# Cheese Finder
+
+<!------------------------------->
+
+<!-- ## Find your dream cheese (other than wensleydale, duh...) -->
+
+
+## Inputs {.sidebar data-width=250}
+
+```{r}
+# Drop down menus
+
+selectInput('selected_country', 'Country', unique(cheeses$country))
+
+selectInput('selected_milk', 'Milk', unique(cheeses$milk))
+
+selectInput('selected_rind', 'Rind', unique(cheeses$rind))
+
+# selectInput('selected_vegetarian', 'Vegetarian', unique(cheeses$vegetarian))
+```
+
+Column
+-----------------------------------------------------------------------
+
+### Cheeses to try
+
+
+```{r}
+
+output$cheese_table <- DT::renderDT({
+
+df <- cheeses |>
+filter(
+country == input$selected_country,
+milk == input$selected_milk,
+rind == input$selected_rind
+) |>
+select(cheese)
+
+DT::datatable(
+df,
+selection = "single",
+rownames = FALSE,
+options = list(dom = 't')
+)
+})
+DT::DTOutput("cheese_table")
+
+# library(dplyr)
+# 
+# renderTable({
+#   df <- cheeses |>
+#     dplyr::filter(country == input$selected_country,
+#                   milk == input$selected_milk,
+#                   rind == input$selected_rind)
+#   
+#   df |> select(cheese)
+# 
+# })
+```
+
+
+Column
+-----------------------------------------------------------------------
+
+```{r}
+
+output$cheese_details <- renderTable({
+  req(input$cheese_table_rows_selected)
+  
+  filtered <- cheeses |>
+    filter(
+      country == input$selected_country,
+      milk == input$selected_milk,
+      rind == input$selected_rind
+    )
+  
+  row <- filtered[input$cheese_table_rows_selected, ]
+
+  # Convert to vertical key-value table
+  data.frame(
+    Field = names(row),
+    Value = as.character(t(row)),
+    stringsAsFactors = FALSE
+  )
+})
+
+tableOutput("cheese_details")
+
+# output$cheese_details <- renderTable({
+# req(input$cheese_table_rows_selected)
+# 
+# filtered <- cheeses |>
+# filter(
+# country == input$selected_country,
+# milk == input$selected_milk,
+# rind == input$selected_rind
+# )
+# 
+# filtered[input$cheese_table_rows_selected, ]
+# })
+# 
+# tableOutput("cheese_details")
+```
+
+
+
