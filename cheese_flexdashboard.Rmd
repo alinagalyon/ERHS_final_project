@@ -53,9 +53,15 @@ ggplot(data = cheeses) +
   labs(x = "Milk", y = "Number of Cheeses")
 ```
 
-### Chart 2 {data-height="800"}
+### Chart 2 {data-height="6400"}
+
+```{r, include=FALSE}
+source("251202_heatmap.R")
+
+```
 
 ```{r}
+ht
 ```
 
 ### Chart 3 {data-height="800"}
@@ -69,7 +75,7 @@ ggplot(data = cheeses) +
 
 Some information about the chart
 
-### Chart 2 Description {data-height="800"}
+### Chart 2 Description {data-height="6400"}
 
 Information about this chart
 

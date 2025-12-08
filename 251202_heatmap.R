@@ -1,24 +1,27 @@
----
-title: "251202_heatmap"
-author: "Alina"
-date: "2025-12-02"
-output: html_document
----
-## To do- filter out flavors with little data, add n = next to animals
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+# ---
+#   title: "251202_heatmap"
+# author: "Alina"
+# date: "2025-12-02"
+# output: html_document
+# ---
+  
+
 
 ## Building a complex multi-trait heatmap adjacent to a phylogenetic tree of the animals (dual-tree heatmap).
 #Including information about what flavor traits commonly come from different animals, and if there is a relation to
 #phylogeny. I clustered the flavor traits into 7 larger groups and I also plotted the average calcium and fat content
 #from the cheese of each animal and displayed by a color gradient.
 
-```{r prep_animals}
+#####################
+## prep_animals
+#####################
+
+
 library(tidyverse)
+library(dplyr)
 
 #Load data and remove milk NAs
-cheeses <- read_csv("cheeses.csv")
+cheeses <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-04/cheeses.csv')
 cheeses_clean <- cheeses %>%
   filter(!is.na(milk)) %>%
   mutate(
@@ -26,12 +29,13 @@ cheeses_clean <- cheeses %>%
   )
 
 # Check animals
-unique(cheeses_clean$primarymilk) #good
+animals <- unique(cheeses_clean$primarymilk) #good
 
-```
 
+###########################
 ## Build phylogenetic tree of animals:
-```{r phylo_tree}
+###########################
+
 library(ape) #Analyses of Phylogenetics and Evolution
 library(rotl) #An interface to the 'Open Tree of Life' API to retrieve phylogenetic trees
 #manually enter the respective scientific names for each animal milk source
@@ -79,11 +83,15 @@ row_order_from_tree <- labels(row_dend) #extract row order as an object for heat
 plot(tree, cex = 1)
 
 
-```
+
 
 ## Build a flavor-by-animal matrix:
 
-```{r build_flavor_matrix}
+####################
+## build_flavor_matrix
+#####################
+
+
 library(tidyr)
 library(stringr)
 
@@ -123,9 +131,13 @@ flavor_mat_nonzero <- flavor_mat %>%
   filter(rowSums(across(-primarymilk)) > 0)
 
 flavor_mat_nonzero # donkey dropped, no flavor data
-```
+
 ## Cluster flavors into fewer categories:
-```{r flavor_cat}
+
+#####################3
+## flavor_cat
+##################3###
+
 unique(flavor_long$flavor) #46 unique flavor notes
 
 flavor_grouped_long <- flavor_long %>%
@@ -185,15 +197,20 @@ cheeses_flavor_groups <- flavor_grouped_long %>%
 cheeses_flavor_groups
 
 
-```
+
 
 
 ## align flavor matrix with tree:
-```{r align_flavor_with_tree}
+####################
+## align_flavor_with_tree
+####################
+# if (!require("BiocManager", quietly = TRUE))
+#   install.packages("BiocManager")
+# BiocManager::install("ggtree")
 library(ggtree)
 
-# Use only animals with nonzero flavor counts:
-flavor_df <- flavor_mat   # dropped moose
+# Choose whether to use all animals or only nonzero ones:
+flavor_df <- flavor_mat   # or flavor_mat_nonzero
 
 # Move primarymilk into rownames and drop the column
 flavor_df2 <- as.data.frame(flavor_df)
@@ -206,11 +223,13 @@ common_animals <- intersect(tree$tip.label, rownames(flavor_df2))
 flavor_df2 <- flavor_df2[common_animals, , drop = FALSE]
 
 
-```
 
 
 
-```{r align_flavor_to_tree, message=FALSE, warning=FALSE}
+#######################3
+## align_flavor_to_tree
+########################
+
 library(dplyr)
 library(tibble)
 
@@ -240,9 +259,12 @@ tree$tip.label
 all(rownames(flavor_heat) == tree$tip.label) #True
 
 
-```
 
-```{r pctflavor}
+
+###################3
+## pctflavor
+###################
+
 # Convert flavor counts to row-wise percent of total flavor mentions
 flavor_pct <- sweep(flavor_heat, 1,
                     rowSums(flavor_heat, na.rm = TRUE),
@@ -252,10 +274,14 @@ flavor_pct <- flavor_pct[rownames(flavor_pct) != "donkey", ]
 
 rowSums(flavor_pct)
 
-```
 
 
-```{r calculate avg fat and calcium}
+
+####################
+## calculate avg fat and calcium
+####################
+
+
 # Assuming 'cheeses' is loaded and tidyverse is available
 library(tidyverse)
 library(ComplexHeatmap)
@@ -311,27 +337,38 @@ average_content_df <- cheeses_fat_calc %>%
   )
 
 # --- 3. Align Data to Phylogenetic Tree Order ---
+# This assumes 'row_order_from_tree' is available from your phylo_tree chunk
 
 common_milk_order <- unname(name_map[row_order_from_tree])
 master_milk_order <- data.frame(primarymilk = row_order_from_tree)
 
-#making metadata dataframe
 meta_df <- master_milk_order %>%
   left_join(average_content_df, by = "primarymilk") %>%
   column_to_rownames(var = "primarymilk")
 
-# --- 4. Define Color Scales ---
-fat_max <- max(meta_df$AvgFat, na.rm = TRUE) #max = ~42
-cal_max <- max(meta_df$AvgCalcium, na.rm = TRUE) #cal max = 1.05
+# --- 4. Define Color Scales (WITH ROBUST CHECK) ---
+fat_max <- max(meta_df$AvgFat, na.rm = TRUE)
+cal_max <- max(meta_df$AvgCalcium, na.rm = TRUE)
+
+# FIX: Check for infinite/negative maximums and set a reasonable fallback
+# This is necessary if all data points for a nutrient were NA, causing max() to return -Inf.
+if (is.infinite(fat_max) || fat_max <= 0) {
+  fat_max <- 50 # Default max of 50% fat
+}
+if (is.infinite(cal_max) || cal_max <= 0) {
+  cal_max <- 0.1 # Default max of 0.1% calcium (a typical small percentage)
+}
 
 fat_col_fun <- colorRamp2(c(0, fat_max), c("white", "orange"))
-cal_col_fun <- colorRamp2(c(0, cal_max), c("white", "cornflowerblue"))
-```
+cal_col_fun <- colorRamp2(c(0, cal_max), c("white", "lightblue"))
 
-```{r row_annotation_def}
+
+################
+## row_annotation_def
+################
 library(ComplexHeatmap)
 
-# 1. Prepare data frame (meta_df should be correctly aligned)
+# 1. Prepare data frame (assuming meta_df is correctly aligned)
 meta_df_for_anno <- meta_df[, c("AvgFat", "AvgCalcium")]
 
 row_anno <- rowAnnotation(
@@ -348,15 +385,18 @@ row_anno <- rowAnnotation(
   # --- CRITICAL FIX: Use fixed values to guarantee list structure ---
   annotation_legend_param = list(
     AvgFat = list(title = "Avg Fat (%)", at = c(0, 40)),     # Using fixed max of 40%
-    AvgCalcium = list(title = "Avg Calcium (%)", at = c(0, 1.05)) # Using fixed max of 1.05%
+    AvgCalcium = list(title = "Avg Calcium (%)", at = c(0, 1.05)) # Using fixed max of 0.1%
   )
 )
 
 
-```
 
 
-```{r final_heatmmap}
+
+#################
+## FInal Heatmap
+#################
+
 library(ComplexHeatmap)
 library(circlize)
 
@@ -383,13 +423,13 @@ cluster_levels <- c(
 
 flavor_group_fac <- factor(flavor_groups, levels = cluster_levels)
 
-heatmap_order <- tree$tip.label #make sure orders are aligned
+heatmap_order <- tree$tip.label
 
 flavor_pct_ordered <- flavor_pct[heatmap_order, , drop = FALSE]
 
 # color for annotation (one color per flavor-group)
 group_colors <- structure(
-  RColorBrewer::brewer.pal(length(cluster_levels), "YlOrBr"),
+  RColorBrewer::brewer.pal(length(cluster_levels), "Set3"),
   names = cluster_levels
 )
 
@@ -403,7 +443,7 @@ group_colors <- c(
   "Bright / Acidic"            = "#FF8D1A",
   "Dairy / Rich"               = "#FF5733",
   "Savory / Umami"             = "#C70039",
-  "Earthy / Herbaceous"        = "darkgreen",
+  "Earthy / Herbaceous"        = "#7D3C98",
   "Intense / Pungent"          = "#900C3F",
   "Aromatic / Nutty / Fermented" = "#4E342E",
   "Texture"                    = "#1F618D"
@@ -429,17 +469,17 @@ ht <- Heatmap(
   flavor_pct,
   name = "% of flavor notes",
   col = col_fun,
-
+  
   # ROWS
   cluster_rows = row_dend,
   row_names_side = "left",
-
+  
   # COLUMNS
   cluster_columns = TRUE,
   column_split = flavor_group_fac,
   top_annotation = top_anno,
   left_annotation = row_anno,
-
+  
   column_names_rot = 90,
   column_title = "Flavor-note clusters",
   heatmap_legend_param = list(
@@ -451,7 +491,7 @@ ht <- Heatmap(
 
 ht
 
-```
+
 
 
 
