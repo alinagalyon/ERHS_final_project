@@ -109,19 +109,19 @@ Column
 output$cheese_table <- DT::renderDT({
 
 df <- cheeses |>
-filter(
-country == input$selected_country,
-milk == input$selected_milk,
-rind == input$selected_rind
-) |>
-select(cheese)
+  dplyr::filter(
+    country == input$selected_country,
+    milk == input$selected_milk,
+    rind == input$selected_rind
+  ) |>
+  dplyr::select(cheese)
 
 DT::datatable(
-df,
-selection = "single",
-rownames = FALSE,
-options = list(dom = 't')
-)
+  df,
+  selection = "single",
+  rownames = FALSE,
+  options = list(dom = 't')
+  )
 })
 DT::DTOutput("cheese_table")
 
@@ -148,7 +148,7 @@ output$cheese_details <- renderTable({
   req(input$cheese_table_rows_selected)
   
   filtered <- cheeses |>
-    filter(
+    dplyr::filter(
       country == input$selected_country,
       milk == input$selected_milk,
       rind == input$selected_rind
