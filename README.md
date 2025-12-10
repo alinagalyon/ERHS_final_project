@@ -3,6 +3,15 @@
 <img src="https://c.tenor.com/hN89U2X0PC4AAAAC/tenor.gif" width="400" height="400" />
 
 
+### Colour Pallete:
+
+```{r}
+
+palette(c("#CEAB44", "#FEBD37", "#DABB9F", "#4E501A", "#ABC115", "#CC160E", "#F75400", "#59454C", "#F2F3EF", "#0A0E15"))
+pallete()
+
+```
+
 ### Notes:
 
 * Some inspiration from other projects

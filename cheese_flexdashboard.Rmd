@@ -53,9 +53,15 @@ ggplot(data = cheeses) +
   labs(x = "Milk", y = "Number of Cheeses")
 ```
 
-### Chart 2 {data-height="800"}
+### Chart 2 {data-height="6400"}
+
+```{r, include=FALSE}
+source("251202_heatmap.R")
+
+```
 
 ```{r}
+ht
 ```
 
 ### Chart 3 {data-height="800"}
@@ -69,7 +75,7 @@ ggplot(data = cheeses) +
 
 Some information about the chart
 
-### Chart 2 Description {data-height="800"}
+### Chart 2 Description {data-height="6400"}
 
 Information about this chart
 
@@ -109,19 +115,19 @@ Column
 output$cheese_table <- DT::renderDT({
 
 df <- cheeses |>
-filter(
-country == input$selected_country,
-milk == input$selected_milk,
-rind == input$selected_rind
-) |>
-select(cheese)
+  dplyr::filter(
+    country == input$selected_country,
+    milk == input$selected_milk,
+    rind == input$selected_rind
+  ) |>
+  dplyr::select(cheese)
 
 DT::datatable(
-df,
-selection = "single",
-rownames = FALSE,
-options = list(dom = 't')
-)
+  df,
+  selection = "single",
+  rownames = FALSE,
+  options = list(dom = 't')
+  )
 })
 DT::DTOutput("cheese_table")
 
@@ -148,7 +154,7 @@ output$cheese_details <- renderTable({
   req(input$cheese_table_rows_selected)
   
   filtered <- cheeses |>
-    filter(
+    dplyr::filter(
       country == input$selected_country,
       milk == input$selected_milk,
       rind == input$selected_rind
