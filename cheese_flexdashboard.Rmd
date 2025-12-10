@@ -29,7 +29,24 @@ library(shiny)
 
 Wow, do you love cheese? Yes? That means you're in the right place. Don't forget the crackers!
 
-<!-- <img src="https://c.tenor.com/hN89U2X0PC4AAAAC/tenor.gif" width="400" height="300"/> -->
+##### Cheese Data Information and Location: 
+We are using the **cheese data** from [tidytuesday cheese data](https://github.com/rfordatascience/tidytuesday/tree/main/data/2024/2024-06-04) 
+The tidytuesday cheese data is located in the folder from data/2024 on 06-04-2024 which is linked above.
+The *cheese information* comes from [cheese.com](https://www.cheese.com/) which uses cheese characteristics to help consumers locate their ideal cheese and relevant vendors. 
+
+The cheese data lists a different cheese type in each row (under the "cheese" column) and includes the cheese.com website for this cheese, the milk used to make the cheese, the cheese production region and cheese characteristics such as fat and calcium content as well as flavor, color, aroma, rind and cheese family grouping characterization. There is different information included for different cheese types and so there are many "NA" values included.For a complete breakdown of the column names and tidydata data frame see the [tidytuesday cheese ReadMe](https://github.com/rfordatascience/tidytuesday/blob/main/data/2024/2024-06-04/readme.md) 
+
+##### Cheese Dashboard Uses: 
+In our cheese dashboard, we are showing:
+
+1. cheese production region in an interactive map 
+2. cheese flavor families in a heatmap of flavor and milk (animal-produced)
+3. number of cheese types by producing animal
+4. cheeses to try by characteristic (check out the drop down box!)
+
+Navigate to different tabs to check out our cheese info and data graphics!
+
+<img src="https://c.tenor.com/hN89U2X0PC4AAAAC/tenor.gif" width="400" height="300"/>
 
 # Cheese Stats
 <!------------------------------->
